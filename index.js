@@ -14,7 +14,21 @@ const options = {
     expiresIn: '300s'
 }
 
+//Middlewares
 app.use(express.urlencoded({ extended: false }))
+
+const token = (req, res, next) => {
+
+    const fullToken = req.headers['authorization']
+    if (fullToken) {
+        const bearer = fullToken.split(' ')
+        const bearerToken = bearer[1]
+        req.token = bearerToken
+        next()
+    }else{
+        res.json({"invalid-token": "No login because found no token"})
+    }
+}
 
 app.get('/', (req, res) => {
     res.send("Hello")
@@ -42,6 +56,19 @@ app.post('/login', (req, res) => {
             // console.log(typeof token);
         })
     }
+})
+
+app.post('/user', token, (req, res) => { 
+    jwt.verify(req.token, SECRETKEY, (err, authData) => {
+        if(err){
+            res.json({"error":"Invalid JWT"})
+        }else{
+            res.json({
+                Message:'Post created...',
+                authData
+            })
+        }
+    })
 })
 
 app.listen(PORT, () => {
